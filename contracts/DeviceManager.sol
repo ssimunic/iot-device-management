@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
 import "./MerkleProof.sol";
+import "./ECRecovery.sol";
 
 /**
  * @title Provides base functionalities for entities.
@@ -15,12 +16,17 @@ contract EntityBase {
     /// @notice Maps owner to an Entity structure.
     mapping (address => Entity) public ownerToEntity;
 
+    /// @dev Fired on entity data update.
+    event EntityDataUpdated(address indexed owner, string newData);
+
     /**
      * @notice Update entity data.
      * @param _data Entity data.
      */
     function updateEntityData(string _data) public {
         ownerToEntity[msg.sender].data = _data;
+
+        emit EntityDataUpdated(msg.sender, _data);
     }
 }
 
@@ -150,28 +156,11 @@ contract DeviceHelper is DeviceBase {
      * On-chain validation is available only for Ethereum signed messages.
      * @param _deviceId ID of a device that signed the message.
      * @param _messageHash Hash of sent message.
-     * @param _v Decimal of the last byte of the signature.
-     * @param _r First 32 bytes of the signature.
-     * @param _s Second 32 bytes of the signature.
+     * @param _signature Signature generated using web3.eth.sign().
      * @return Boolean status.
      */
-    function isValidEthereumMessage(uint _deviceId, bytes32 _messageHash, uint8 _v, bytes32 _r, bytes32 _s) public view returns (bool) {
-        return _verify(_messageHash, _v, _r, _s) == address(devices[_deviceId].identifier);
-    }
-
-    /**
-     * @dev Recovers address from message hash and elliptic curve signature. 
-     * @param _messageHash Hash of the message.
-     * @param _v Decimal of the last byte of the signature.
-     * @param _r First 32 bytes of the signature.
-     * @param _s Second 32 bytes of the signature.
-     * @return Boolean status.
-     */
-    function _verify(bytes32 _messageHash, uint8 _v, bytes32 _r, bytes32 _s) internal pure returns (address) {
-        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, _messageHash));
-        address recoveredAddress = ecrecover(prefixedHash, _v, _r, _s);
-        return recoveredAddress;
+    function isValidEthMessage(uint _deviceId, bytes32 _messageHash, bytes _signature) public view returns (bool) {
+        return ECRecovery.recover(_messageHash, _signature) == address(devices[_deviceId].identifier);
     }
 }
 
