@@ -1,0 +1,9 @@
+@import '~antd/dist/antd.css';
+
+.loading-spin {
+  text-align: center;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  padding: 30px 50px;
+  margin: 10px 0;
+}
