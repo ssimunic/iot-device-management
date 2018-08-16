@@ -55,7 +55,7 @@ class ManageDevices extends Component {
                 renderItem={(device, index) => (
                   <List.Item>
                     <List.Item.Meta
-                      avatar={<Icon type="profile" style={{ fontSize: 36 }} />}
+                      /*avatar={<Icon type="profile" style={{ fontSize: 36 }} />}*/
                       title={<Link to={`/manage-device/${this.state.deviceIds[index]}`}>{`Device ID ${this.state.deviceIds[index]}`}</Link>}
                       description={`Identifier ${device[1]}`}
                     />

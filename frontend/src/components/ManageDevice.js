@@ -3,7 +3,7 @@ import DeviceManager, { getDefaultAccount } from '../DeviceManager';
 import { addHexPrefix } from 'ethereumjs-util';
 
 import React, { Component } from 'react';
-import { Button, Input, Alert, Divider, Spin, Icon, notification, message } from 'antd';
+import { Tag, Button, Input, Card, Timeline, Divider, Spin, Icon, notification, message } from 'antd';
 
 const openNotificationWithIcon = (type, message, description) => {
   notification[type]({
@@ -21,7 +21,8 @@ class ManageDevice extends Component {
       loading: true,
       showEditIdentifier: false,
       showEditMetadata: false,
-      showEditFirmware: false
+      showEditFirmware: false,
+      showEditOwner: false
     }
 
     this.commonChange = this.commonChange.bind(this);
@@ -47,28 +48,38 @@ class ManageDevice extends Component {
   }
 
   async updateDeviceData() {
-    const { instance } = this.state;
+    const { instance, deviceId } = this.state;
 
-    let device = await instance.devices(this.state.deviceId);
+    let device = await instance.devices(deviceId);
 
-    this.setState({
-      owner: device[0],
-      identifier: device[1],
-      metadataHash: device[2],
-      firmwareHash: device[3],
-      loading: false
-    })
+    let eventsToSave = ['DeviceCreated', 'DevicePropertyUpdated', 'DeviceTransfered'];
+    let allEvents = instance.allEvents({ fromBlock: 0, toBlock: 'latest' });
+    allEvents.get((error, logs) => {
+      let filteredData = logs.filter(el => eventsToSave.includes(el.event) && el.args.deviceId.toNumber() == deviceId);
+      console.log(filteredData);
+      if (!error) {
+        this.setState({
+          data: filteredData,
+          loading: false,
+          owner: device[0],
+          identifier: device[1],
+          metadataHash: device[2],
+          firmwareHash: device[3],
+        })
+      }
 
-    let { identifier, metadataHash, firmwareHash } = this.state;
-    this.setState({
-      identifierNew: identifier,
-      metadataHashNew: metadataHash,
-      firmwareHashNew: firmwareHash
-    })
+      let { identifier, metadataHash, firmwareHash, owner } = this.state;
+      this.setState({
+        identifierNew: identifier,
+        metadataHashNew: metadataHash,
+        firmwareHashNew: firmwareHash,
+        ownerNew: owner
+      })
+    });
   }
 
   toggleEdit(property) {
-    const { showEditFirmware, showEditIdentifier, showEditMetadata } = this.state;
+    const { showEditFirmware, showEditIdentifier, showEditMetadata, showEditOwner } = this.state;
 
     switch (property) {
       case 'identifier':
@@ -84,6 +95,11 @@ class ManageDevice extends Component {
       case 'firmware':
         this.setState({
           showEditFirmware: !showEditFirmware
+        })
+        break;
+      case 'transfer':
+        this.setState({
+          showEditOwner: !showEditOwner
         })
         break;
       default:
@@ -107,7 +123,7 @@ class ManageDevice extends Component {
   }
 
   async saveData(property) {
-    const { instance, deviceId, identifier, identifierNew, metadataHash, metadataHashNew, firmwareHash, firmwareHashNew } = this.state;
+    const { instance, deviceId, identifier, identifierNew, metadataHash, metadataHashNew, firmwareHash, firmwareHashNew, owner, ownerNew } = this.state;
 
     try {
       switch (property) {
@@ -141,6 +157,16 @@ class ManageDevice extends Component {
             });
           }
           break;
+        case 'transfer':
+          if (owner !== ownerNew) {
+            await instance.transferDevice(deviceId, addHexPrefix(ownerNew), { from: getDefaultAccount() });
+            this.watchForChanges('owner');
+            openNotificationWithIcon('info', 'Transaction sent', 'Once mined, owner for this device will be updated.');
+            this.setState({
+              loading: true,
+            });
+          }
+          break;
         default:
       }
 
@@ -160,7 +186,7 @@ class ManageDevice extends Component {
   }
 
   render() {
-    const { loading, owner, identifier, metadataHash, firmwareHash, showEditFirmware, showEditIdentifier, showEditMetadata } = this.state;
+    const { web3, loading, owner, identifier, metadataHash, firmwareHash, showEditFirmware, showEditIdentifier, showEditMetadata, showEditOwner } = this.state;
 
     let identifierContent = () => {
       if (showEditIdentifier) {
@@ -174,7 +200,9 @@ class ManageDevice extends Component {
       return (
         <div>
           Identifier {identifier}&nbsp;
-          <a><Icon type="edit" onClick={() => this.toggleEdit('identifier')} /></a>
+          {owner === getDefaultAccount() &&
+            <a><Icon type="edit" onClick={() => this.toggleEdit('identifier')} /></a>
+          }
         </div>
       )
     }
@@ -191,7 +219,9 @@ class ManageDevice extends Component {
       return (
         <div>
           Metadata hash {metadataHash.length > 0 ? metadataHash : 'empty'}&nbsp;
-          <a><Icon type="edit" onClick={() => this.toggleEdit('metadata')} /></a>
+          {owner === getDefaultAccount() &&
+            <a><Icon type="edit" onClick={() => this.toggleEdit('metadata')} /></a>
+          }
         </div>
       )
     }
@@ -208,7 +238,32 @@ class ManageDevice extends Component {
       return (
         <div>
           Firmware hash {firmwareHash.length > 0 ? firmwareHash : 'empty'}&nbsp;
-          <a><Icon type="edit" onClick={() => this.toggleEdit('firmware')} /></a>
+          {owner === getDefaultAccount() &&
+            <a><Icon type="edit" onClick={() => this.toggleEdit('firmware')} /></a>
+          }
+        </div>
+      )
+    }
+
+    let transferContent = () => {
+      if (showEditOwner) {
+        return (
+          <div>
+            <Input name="ownerNew" value={this.state.ownerNew} onChange={this.commonChange} maxLength="66" />
+            <Button type="primary" style={{ marginTop: '10px' }} onClick={() => this.saveData('transfer')}>Save</Button>
+          </div>
+        )
+      }
+      return (
+        <div>
+          {owner === getDefaultAccount() &&
+            <Button type="dashed" onClick={() => this.toggleEdit('transfer')}> Transfer ownership</Button>
+          }
+          {owner !== getDefaultAccount() &&
+            <div>
+              Owned by <Tag>{owner}</Tag>
+            </div>
+          }
         </div>
       )
     }
@@ -216,17 +271,41 @@ class ManageDevice extends Component {
     return (
       <div>
         <Spin spinning={loading} className="loading-spin">
-          {loading === false && owner === getDefaultAccount() &&
+          {loading === false &&
             <div>
               <h3><div style={{ marginBottom: '20px' }}>{identifierContent()}</div></h3>
               <Divider />
               <div style={{ marginBottom: '20px' }}>{metadataContent()}</div>
               <div style={{ marginBottom: '20px' }}>{firmwareContent()}</div>
+              {transferContent()}
+              <Divider />
+              <Card title={'Historical events (oldest to newest)'}>
+                {this.state.data.length !== 0 ?
+                  <div>
+                    <Timeline style={{ marginTop: '10px' }}>
+                      {this.state.data.map(el => {
+                        if (el.event === 'DeviceCreated')
+                          return <Timeline.Item color='green'>Created device with ID <em>{el.args.deviceId.toNumber()}</em> and identifier <em>{el.args.identifier}</em></Timeline.Item>
+                        if (el.event === 'DevicePropertyUpdated')
+                          return <Timeline.Item>Property <strong>{web3.toUtf8(el.args.property)}</strong> updated from <em>{el.args.oldValue}</em> to <em>{el.args.newValue}</em></Timeline.Item>
+                        if (el.event === 'DeviceTransfered')
+                          return <Timeline.Item color='orange'>Device <strong>transfered</strong> from &nbsp;<Tag>{el.args.oldOwner}</Tag>to &nbsp;<Tag>{el.args.newOwner}</Tag></Timeline.Item>
+                        else
+                          return null
+                      })}
+                    </Timeline>
+                  </div>
+                  :
+                  <p><em>empty</em></p>
+                }
+              </Card>
             </div>
           }
+          {/*
           {loading === false && owner !== getDefaultAccount() &&
             <Alert message="You don't own this device." type="error" showIcon />
           }
+          */}
         </Spin >
       </div>
     );
