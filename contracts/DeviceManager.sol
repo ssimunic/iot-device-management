@@ -40,8 +40,8 @@ contract DeviceBase {
         address owner;
 
         // Unique device identifier. Can hold anything that fits into 32 bytes. Different from device ID.
-        // Supposed to be public key or representation of public key, such as fingerprint of RSA/RCC 
-        // public keys or simply Ethereum address. To make identifier be an Ethereum address, 
+        // Supposed to be a public key or a representation of one, such as fingerprint of RSA/ECC 
+        // public key or simply an Ethereum address. To make identifier be an Ethereum address, 
         // use secp256k1 curve to generate public and private key pair, run keccak256 hash function
         // on public key and take last 20 bytes of generated hash to get Ethereum address.
         // If a device wants to be it's own entity, use same address as in owner property.

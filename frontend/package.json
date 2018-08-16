@@ -4,6 +4,10 @@
   "private": true,
   "dependencies": {
     "antd": "^3.8.1",
+    "elliptic": "^6.4.1",
+    "ethereumjs-util": "^5.2.0",
+    "ethereumjs-wallet": "^0.6.2",
+    "merkle-tree-solidity": "^1.0.8",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-router-dom": "^4.3.1",

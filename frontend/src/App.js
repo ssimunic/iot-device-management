@@ -8,9 +8,9 @@ import './App.css';
 import Home from './components/Home';
 import RegisterDevice from './components/RegisterDevice';
 import ManageDevices from './components/ManageDevices';
-import Signatures from './components/Signatures';
 import EditEntity from './components/EditEntity';
 import LookupEntity from './components/LookupEntity';
+import ManageDevice from './components/ManageDevice';
 
 import { Layout, Menu, Icon, Tag, Alert, Spin } from 'antd';
 
@@ -82,7 +82,7 @@ class App extends Component {
           <Route path="/lookup-entity" component={LookupEntity} />
           <Route path="/register-device" component={RegisterDevice} />
           <Route path="/manage-devices" component={ManageDevices} />
-          <Route path="/signatures" component={Signatures} />
+          <Route path="/manage-device/:deviceId" component={ManageDevice} />
         </div>
       }
       return (
@@ -146,7 +146,7 @@ class App extends Component {
                       <Link to="/manage-devices" className="nav-text">Manage</Link>
                     </Menu.Item>
                     <Menu.Item key="5">
-                      <Link to="/filter-devices" className="nav-text">Filter</Link>
+                      <Link to="#" className="nav-text">Filter</Link>
                     </Menu.Item>
                   </SubMenu>
                   <SubMenu key="sub3" title={<span><Icon type="form" />Signatures</span>}>
