@@ -262,7 +262,7 @@ contract DeviceUpdatable is DeviceHelper, SignatureHelper {
     event DeviceTransfered(uint indexed deviceId, address oldOwner, address newOwner);
     
     /// @dev Fired on device property update, keeps track of historical property values.
-    event DevicePropertyUpdated(uint indexed deviceId, bytes32 indexed property, bytes32 oldValue, bytes32 newValue);
+    event DevicePropertyUpdated(uint indexed deviceId, bytes32 indexed property, bytes32 newValue);
 
     /**
      * @notice Transfer device ownership from one external account to another. Emits DeviceTransfered.
@@ -284,10 +284,9 @@ contract DeviceUpdatable is DeviceHelper, SignatureHelper {
      * @param _newIdentifier New identifier.
      */
     function updateIdentifier(uint _deviceId, bytes32 _newIdentifier) public onlyOwnerOf(_deviceId) notSigned(_deviceId) {
-        bytes32 oldIdentifier = devices[_deviceId].identifier;
         devices[_deviceId].identifier = _newIdentifier;
 
-        emit DevicePropertyUpdated(_deviceId, "identifier", oldIdentifier, _newIdentifier);
+        emit DevicePropertyUpdated(_deviceId, "identifier", _newIdentifier);
     }
 
     /**
@@ -296,10 +295,9 @@ contract DeviceUpdatable is DeviceHelper, SignatureHelper {
      * @param _newMetadataHash New metadata hash.
      */
     function updateMetadataHash(uint _deviceId, bytes32 _newMetadataHash) public onlyOwnerOf(_deviceId) notSigned(_deviceId) {
-        bytes32 oldMetadataHash = devices[_deviceId].metadataHash;
         devices[_deviceId].metadataHash = _newMetadataHash;
 
-        emit DevicePropertyUpdated(_deviceId, "metadata", oldMetadataHash, _newMetadataHash);
+        emit DevicePropertyUpdated(_deviceId, "metadata", _newMetadataHash);
     }
 
     /**
@@ -308,10 +306,9 @@ contract DeviceUpdatable is DeviceHelper, SignatureHelper {
      * @param _newFirmwareHash New firmware hash.
      */
     function updateFirmwareHash(uint _deviceId, bytes32 _newFirmwareHash) public onlyOwnerOf(_deviceId) notSigned(_deviceId) {
-        bytes32 oldFirmwareHash = devices[_deviceId].firmwareHash;
         devices[_deviceId].firmwareHash = _newFirmwareHash;
 
-        emit DevicePropertyUpdated(_deviceId, "firmware", oldFirmwareHash, _newFirmwareHash);
+        emit DevicePropertyUpdated(_deviceId, "firmware", _newFirmwareHash);
     }
 }
 
