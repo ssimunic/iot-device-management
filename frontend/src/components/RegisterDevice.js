@@ -3,7 +3,7 @@ import DeviceManager, { getDefaultAccount } from '../DeviceManager';
 
 import elliptic from 'elliptic';
 import ethWallet from 'ethereumjs-wallet';
-import { sha3, addHexPrefix } from 'ethereumjs-util';
+import { sha3, addHexPrefix, setLengthLeft } from 'ethereumjs-util';
 import { merkleRoot } from 'merkle-tree-solidity';
 
 import React, { Component } from 'react';
@@ -37,11 +37,6 @@ class RegisterDevice extends Component {
   constructor(props) {
     super(props);
     this.state = this.getInitialState();
-    /*
-    this.setState({
-      web3: null
-    })
-    */
   }
 
   getInitialState() {
@@ -57,7 +52,8 @@ class RegisterDevice extends Component {
       address: '',
       metadata: [{ value: '' }],
       firmware: '',
-      curve: ''
+      curve: '',
+      deviceId: '',
     };
   }
 
@@ -78,22 +74,28 @@ class RegisterDevice extends Component {
     }
   }
 
-  watchForChanges() {
-    let filter = this.state.web3.eth.filter('latest', (error, result) => {
+  async watchForChanges(txHash) {
+    let instance = await DeviceManager;
+    let deviceCreatedEvent = instance.DeviceCreated()
+
+    deviceCreatedEvent.watch((error, result) => {
       if (!error) {
-        openNotificationWithIcon('success', 'Transaction mined', 'Your device has been registered.');
-        this.state.filter.stopWatching();
-        this.setState({
-          loading: false
-        })
-        this.next();
+        if (result.transactionHash === txHash) {
+          openNotificationWithIcon('success', 'Transaction mined', 'Your device has been registered.');
+          this.state.deviceCreatedEvent.stopWatching();
+          this.setState({
+            loading: false,
+            deviceId: result.args.deviceId.toNumber()
+          })
+          this.next();
+        }
       } else {
         console.error(error);
       }
     });
 
     this.setState({
-      filter
+      deviceCreatedEvent
     })
   }
 
@@ -157,8 +159,8 @@ class RegisterDevice extends Component {
     console.log(`Generating new Ethereum wallet`);
     const newWallet = ethWallet.generate();
 
-    let publicKey = newWallet.getPublicKeyString();
-    let privateKey = newWallet.getPrivateKeyString();
+    let publicKey = newWallet.getPublicKey().toString('hex');
+    let privateKey = newWallet.getPrivateKey().toString('hex');
     let address = newWallet.getAddressString();
 
     console.log(`Private key: ${privateKey}`);
@@ -242,7 +244,7 @@ class RegisterDevice extends Component {
   }
 
   downloadConfiguration() {
-    const { identifier, metadataHash, firmwareHash, metadata, firmware, address, publicKey, privateKey, curve } = this.state;
+    const { identifier, metadataHash, firmwareHash, metadata, firmware, address, publicKey, privateKey, curve, deviceId } = this.state;
 
     const configuration = {
       identifier,
@@ -274,12 +276,16 @@ class RegisterDevice extends Component {
       configuration.curve = curve;
     }
 
+    if (deviceId !== '') {
+      configuration.deviceId = deviceId;
+    }
+
     let configurationJson = JSON.stringify(configuration);
 
     let element = document.createElement("a");
     let file = new Blob([configurationJson], { type: 'text/json' });
     element.href = URL.createObjectURL(file);
-    element.download = `device_${identifier}.json`;
+    element.download = `device_${deviceId}.json`;
     element.click();
   }
 
@@ -436,11 +442,21 @@ class RegisterDevice extends Component {
   }
 
   async createDevice() {
-    const { identifier, metadataHash, firmwareHash } = this.state;
+    const { identifier, metadataHash, firmwareHash, address } = this.state;
     try {
       let instance = await DeviceManager;
-      await instance.createDevice(addHexPrefix(identifier), addHexPrefix(metadataHash), addHexPrefix(firmwareHash), { from: getDefaultAccount() });
-      this.watchForChanges();
+
+      let identifierToSave = identifier;
+      if (address !== '') {
+        let addressToPad = address;
+        if (address.startsWith('0x')) {
+          addressToPad = addressToPad.substring(2);
+        }
+        identifierToSave = setLengthLeft(Buffer.from(addressToPad, 'hex'), 32).toString('hex');
+      }
+
+      let result = await instance.createDevice(addHexPrefix(identifierToSave), addHexPrefix(metadataHash), addHexPrefix(firmwareHash), { from: getDefaultAccount() });
+      this.watchForChanges(result.tx);
       openNotificationWithIcon('info', 'Transaction sent', 'Once mined, your device will be registered.');
       this.setState({
         loading: true
