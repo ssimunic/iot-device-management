@@ -11,6 +11,7 @@ import ManageDevices from './components/ManageDevices';
 import EditEntity from './components/EditEntity';
 import LookupEntity from './components/LookupEntity';
 import ManageDevice from './components/ManageDevice';
+import LookupDevice from './components/LookupDevice';
 
 import { Layout, Menu, Icon, Tag, Alert, Spin } from 'antd';
 
@@ -79,10 +80,11 @@ class App extends Component {
         childComponent = <div>
           <Route exact path="/" component={Home} />
           <Route path="/edit-entity" component={EditEntity} />
-          <Route path="/lookup-entity" component={LookupEntity} />
+          <Route path="/lookup-entity/:address?" component={LookupEntity} />
           <Route path="/register-device" component={RegisterDevice} />
           <Route path="/manage-devices" component={ManageDevices} />
           <Route path="/manage-device/:deviceId" component={ManageDevice} />
+          <Route path="/lookup-device" component={LookupDevice} />
         </div>
       }
       return (
@@ -146,9 +148,15 @@ class App extends Component {
                       <Link to="/manage-devices" className="nav-text">Manage</Link>
                     </Menu.Item>
                     <Menu.Item key="5">
+                      <Link to="/lookup-device" className="nav-text">Lookup</Link>
+                    </Menu.Item>
+                    {/*
+                    <Menu.Item key="5">
                       <Link to="#" className="nav-text">Filter</Link>
                     </Menu.Item>
+                    */}
                   </SubMenu>
+                  {/*
                   <SubMenu key="sub3" title={<span><Icon type="form" />Signatures</span>}>
                     <Menu.Item key="6">
                       <Link to="#" className="nav-text">Sign</Link>
@@ -157,9 +165,10 @@ class App extends Component {
                       <Link to="#" className="nav-text">Check</Link>
                     </Menu.Item>
                   </SubMenu>
+                  */}
                 </Menu>
               </Sider>
-              <Content style={{ padding: '0 24px', minHeight: 280 }}>
+              <Content style={{ padding: '0 24px', minHeight: 400 }}>
                 <Spin spinning={this.state.loading} className="loading-spin">
                   {this.mainContent()}
                 </Spin>

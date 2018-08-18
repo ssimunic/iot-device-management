@@ -3,7 +3,8 @@ import DeviceManager, { getDefaultAccount } from '../DeviceManager';
 import { addHexPrefix } from 'ethereumjs-util';
 
 import React, { Component } from 'react';
-import { Tag, Button, Input, Card, Timeline, Divider, Spin, Icon, notification, message } from 'antd';
+import { Link } from 'react-router-dom';
+import { Tag, Button, Input, Card, Timeline, Divider, Spin, Alert, Icon, notification, message } from 'antd';
 
 const openNotificationWithIcon = (type, message, description) => {
   notification[type]({
@@ -12,6 +13,8 @@ const openNotificationWithIcon = (type, message, description) => {
   });
 };
 
+const eventsToSave = ['DeviceCreated', 'DevicePropertyUpdated', 'DeviceTransfered'];
+
 class ManageDevice extends Component {
   constructor(props) {
     super(props);
@@ -19,6 +22,7 @@ class ManageDevice extends Component {
     this.state = {
       deviceId: this.props.match.params.deviceId,
       loading: true,
+      showError: false,
       showEditIdentifier: false,
       showEditMetadata: false,
       showEditFirmware: false,
@@ -28,6 +32,14 @@ class ManageDevice extends Component {
     this.commonChange = this.commonChange.bind(this);
     this.watchForChanges = this.watchForChanges.bind(this);
     this.updateDeviceData = this.updateDeviceData.bind(this);
+  }
+
+  componentWillReceiveProps({ match }) {
+    this.setState({ 
+      ...this.state,
+      showError: false,
+      deviceId: match.params.deviceId
+    }, () => this.updateDeviceData());
   }
 
   async componentWillMount() {
@@ -43,39 +55,48 @@ class ManageDevice extends Component {
       this.updateDeviceData();
     } catch (error) {
       console.log(error);
-      message.error(error.message);
+      //message.error(error.message);
+      this.setState({
+        loading: false,
+        showError: true
+      })
     }
   }
 
   async updateDeviceData() {
-    const { instance, deviceId } = this.state;
+    try {
+      const { instance, deviceId } = this.state;
+      let device = await instance.devices(deviceId);
+      let allEvents = instance.allEvents({ fromBlock: 0, toBlock: 'latest' });
+      allEvents.get((error, logs) => {
+        let filteredData = logs.filter(el => eventsToSave.includes(el.event) && el.args.deviceId.toNumber() == deviceId);
+        if (!error) {
+          this.setState({
+            data: filteredData,
+            loading: false,
+            owner: device[0],
+            identifier: device[1],
+            metadataHash: device[2],
+            firmwareHash: device[3],
+          })
+        }
 
-    let device = await instance.devices(deviceId);
-
-    let eventsToSave = ['DeviceCreated', 'DevicePropertyUpdated', 'DeviceTransfered'];
-    let allEvents = instance.allEvents({ fromBlock: 0, toBlock: 'latest' });
-    allEvents.get((error, logs) => {
-      let filteredData = logs.filter(el => eventsToSave.includes(el.event) && el.args.deviceId.toNumber() == deviceId);
-      console.log(filteredData);
-      if (!error) {
+        let { identifier, metadataHash, firmwareHash, owner } = this.state;
         this.setState({
-          data: filteredData,
-          loading: false,
-          owner: device[0],
-          identifier: device[1],
-          metadataHash: device[2],
-          firmwareHash: device[3],
+          identifierNew: identifier,
+          metadataHashNew: metadataHash,
+          firmwareHashNew: firmwareHash,
+          ownerNew: owner
         })
-      }
-
-      let { identifier, metadataHash, firmwareHash, owner } = this.state;
+      });
+    } catch (error) {
+      console.log(error);
+      //message.error(error.message);
       this.setState({
-        identifierNew: identifier,
-        metadataHashNew: metadataHash,
-        firmwareHashNew: firmwareHash,
-        ownerNew: owner
+        loading: false,
+        showError: true
       })
-    });
+    }
   }
 
   toggleEdit(property) {
@@ -186,7 +207,7 @@ class ManageDevice extends Component {
   }
 
   render() {
-    const { web3, loading, owner, identifier, metadataHash, firmwareHash, showEditFirmware, showEditIdentifier, showEditMetadata, showEditOwner } = this.state;
+    const { web3, loading, showError, owner, identifier, metadataHash, firmwareHash, showEditFirmware, showEditIdentifier, showEditMetadata, showEditOwner } = this.state;
 
     let identifierContent = () => {
       if (showEditIdentifier) {
@@ -261,7 +282,7 @@ class ManageDevice extends Component {
           }
           {owner !== getDefaultAccount() &&
             <div>
-              Owned by <Tag>{owner}</Tag>
+              Owned by <Link to={"/lookup-entity/" + owner}><Tag>{owner}</Tag></Link>
             </div>
           }
         </div>
@@ -271,7 +292,7 @@ class ManageDevice extends Component {
     return (
       <div>
         <Spin spinning={loading} className="loading-spin">
-          {loading === false &&
+          {loading === false && showError === false &&
             <div>
               <h3><div style={{ marginBottom: '20px' }}>{identifierContent()}</div></h3>
               <Divider />
@@ -279,17 +300,18 @@ class ManageDevice extends Component {
               <div style={{ marginBottom: '20px' }}>{firmwareContent()}</div>
               {transferContent()}
               <Divider />
-              <Card title={'Historical events (oldest to newest)'}>
+              <Card title={'Historical events for device (oldest to newest)'}>
                 {this.state.data.length !== 0 ?
                   <div>
+                    <p style={{ marginBottom: '20px' }}>Events that are filtered are {eventsToSave.join(', ')} </p>
                     <Timeline style={{ marginTop: '10px' }}>
                       {this.state.data.map(el => {
                         if (el.event === 'DeviceCreated')
-                          return <Timeline.Item color='green'>Created device with ID <em>{el.args.deviceId.toNumber()}</em> and identifier <em>{el.args.identifier}</em></Timeline.Item>
+                          return <Timeline.Item color='green'>Device created by &nbsp;<Link to={"/lookup-entity/" + el.args.owner}><Tag>{el.args.owner}</Tag></Link>with &nbsp;<Link to={"/manage-device/" + el.args.deviceId.toNumber()}><Tag>ID {el.args.deviceId.toNumber()}</Tag></Link>, identifier <code>{el.args.identifier}</code>, metadata hash <code>{el.args.metadataHash}</code> and firmware hash <code>{el.args.firmwareHash}</code></Timeline.Item>
                         if (el.event === 'DevicePropertyUpdated')
-                          return <Timeline.Item>Property <strong>{web3.toUtf8(el.args.property)}</strong> updated from <em>{el.args.oldValue}</em> to <em>{el.args.newValue}</em></Timeline.Item>
+                          return <Timeline.Item>Property {web3.toUtf8(el.args.property)} updated to <code>{el.args.newValue}</code></Timeline.Item>
                         if (el.event === 'DeviceTransfered')
-                          return <Timeline.Item color='orange'>Device <strong>transfered</strong> from &nbsp;<Tag>{el.args.oldOwner}</Tag>to &nbsp;<Tag>{el.args.newOwner}</Tag></Timeline.Item>
+                          return <Timeline.Item color='orange'>Device transfered to &nbsp;<Link to={"/lookup-entity/" + el.args.newOwner}><Tag>{el.args.newOwner}</Tag></Link></Timeline.Item>
                         else
                           return null
                       })}
@@ -306,6 +328,14 @@ class ManageDevice extends Component {
             <Alert message="You don't own this device." type="error" showIcon />
           }
           */}
+          {loading === false && showError &&
+            <Alert
+              message="Error"
+              description="Error loading device: invalid ID format or device doesn't exist."
+              type="error"
+              showIcon
+            />
+          }
         </Spin >
       </div>
     );

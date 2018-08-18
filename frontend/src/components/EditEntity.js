@@ -114,6 +114,9 @@ class EditEntity extends Component {
   render() {
     return (
       <div>
+        <p>
+          Edit your entity details.
+        </p>
         <Card style={{ maxWidth: '500px' }} loading={this.state.loading} title={getDefaultAccount()}>
           {this.state.showEdit ?
             <div>

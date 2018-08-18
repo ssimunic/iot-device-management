@@ -1,8 +1,10 @@
 import DeviceManager, { getDefaultAccount } from '../DeviceManager';
 
 import React, { Component } from 'react';
-import { Spin, List, Icon, message } from 'antd';
-import { Link } from 'react-router-dom';
+import { Spin, List, Divider, Input, message } from 'antd';
+import { Link, withRouter } from 'react-router-dom';
+
+const { Search } = Input;
 
 class ManageDevices extends Component {
   constructor(props) {
@@ -41,15 +43,26 @@ class ManageDevices extends Component {
 
   render() {
     const { devices, loading } = this.state;
+
+    const SearchDevice = withRouter(({ history }) => (
+      <Search
+        placeholder="Device ID"
+        onSearch={value => history.push(`/manage-device/${value}`)}
+        size="large"
+        enterButton
+      />
+    ))
+
     return (
       <div>
         <Spin spinning={loading} className="loading-spin">
           {devices.length > 0 && !loading &&
             <div>
               <p>
-                Below you can find your devices. Click to see more details.
+                Below you can find your devices. Click to see more details and manage.
               </p>
               <List
+                bordered={true}
                 itemLayout="horizontal"
                 dataSource={devices}
                 renderItem={(device, index) => (
