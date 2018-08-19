@@ -9,7 +9,7 @@ import { merkleRoot } from 'merkle-tree-solidity';
 import React, { Component } from 'react';
 import './RegisterDevice.css';
 
-import { Steps, Button, Input, Card, Spin, Alert, Divider, Form, Icon, message, notification } from 'antd';
+import { Steps, Button, Input, Card, Spin, Alert, Divider, Form, Icon, Dropdown, Menu, message, notification } from 'antd';
 
 const Step = Steps.Step;
 const { Meta } = Card;
@@ -177,16 +177,17 @@ class RegisterDevice extends Component {
     })
   }
 
-  generateCurve25519KeyPair() {
-    let ec = new EC('curve25519');
-    console.log(`Generating new Curve25519 key pair`);
+  generateEcKeyPair(curve) {
+    let ec = new EC(curve);
+    console.log(`Generating new ${curve} key pair`);
     let keyPair = ec.genKeyPair();
 
-    let publicKey = keyPair.getPublic().encode('hex');
-    let privateKey = keyPair.getPrivate().toString(16);
+    let publicKey = keyPair.getPublic(true, 'hex');
+    let privateKey = keyPair.getPrivate('hex');
 
     console.log(`Private key: ${privateKey}`);
-    console.log(`Public key: ${publicKey}`);
+    console.log(`Public key compressed: ${publicKey}`);
+    console.log(`Public key uncompressed: ${keyPair.getPublic().encode('hex')}`);
 
     this.setState({
       identifier: publicKey,
@@ -194,7 +195,7 @@ class RegisterDevice extends Component {
       address: '',
       publicKey,
       privateKey,
-      curve: 'curve25519'
+      curve
     })
   }
 
@@ -289,11 +290,21 @@ class RegisterDevice extends Component {
     element.click();
   }
 
+  onCurveSelect({ key }) {
+    this.generateEcKeyPair(key);
+  };
+
   getContentForStep(step) {
     const { identifier, metadataHash, firmwareHash, metadata, firmware } = this.state;
 
     // Identifier
     if (step === 0) {
+      const curves = ['p224', 'curve25519'];
+      const ecMenu = (
+        <Menu onClick={(e) => this.onCurveSelect(e)}>
+          {curves.map(curve => <Menu.Item key={curve}>{curve}</Menu.Item>)}
+        </Menu>
+      );
       return (
         <div>
           <p>
@@ -310,7 +321,11 @@ class RegisterDevice extends Component {
           <br /><br />
           <Button.Group size="large">
             <Button type="primary" onClick={() => this.generateEthWallet()}>Generate Ethereum wallet</Button>
-            <Button type="primary" onClick={() => this.generateCurve25519KeyPair()}>Generate Curve25519 key pair</Button>
+            <Dropdown overlay={ecMenu}>
+              <Button type="primary">
+                Generate elliptic curve key pair
+              </Button>
+            </Dropdown>
           </Button.Group>
           {this.state.showIdentifierInfo ?
             <div>
