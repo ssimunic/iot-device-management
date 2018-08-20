@@ -69,7 +69,7 @@ class ManageDevice extends Component {
       let device = await instance.devices(deviceId);
       let allEvents = instance.allEvents({ fromBlock: 0, toBlock: 'latest' });
       allEvents.get((error, logs) => {
-        let filteredData = logs.filter(el => eventsToSave.includes(el.event) && el.args.deviceId.toNumber() == deviceId);
+        let filteredData = logs.filter(el => eventsToSave.includes(el.event) && el.args.deviceId.toNumber() === parseInt(deviceId, 10));
         if (!error) {
           this.setState({
             data: filteredData,
@@ -292,7 +292,7 @@ class ManageDevice extends Component {
     return (
       <div>
         <Spin spinning={loading} className="loading-spin">
-          {loading === false && showError === false &&
+          {loading === false && showError === false && typeof metadataHash !== 'undefined' &&
             <div>
               <h3><div style={{ marginBottom: '20px' }}>{identifierContent()}</div></h3>
               <Divider />

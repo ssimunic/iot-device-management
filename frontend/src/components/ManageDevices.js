@@ -1,10 +1,8 @@
 import DeviceManager, { getDefaultAccount } from '../DeviceManager';
 
 import React, { Component } from 'react';
-import { Spin, List, Divider, Input, message } from 'antd';
-import { Link, withRouter } from 'react-router-dom';
-
-const { Search } = Input;
+import { Spin, List, message } from 'antd';
+import { Link } from 'react-router-dom';
 
 class ManageDevices extends Component {
   constructor(props) {
@@ -43,15 +41,6 @@ class ManageDevices extends Component {
 
   render() {
     const { devices, loading } = this.state;
-
-    const SearchDevice = withRouter(({ history }) => (
-      <Search
-        placeholder="Device ID"
-        onSearch={value => history.push(`/manage-device/${value}`)}
-        size="large"
-        enterButton
-      />
-    ))
 
     return (
       <div>
