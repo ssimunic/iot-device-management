@@ -13,7 +13,7 @@ const openNotificationWithIcon = (type, message, description) => {
   });
 };
 
-const eventsToSave = ['DeviceCreated', 'DevicePropertyUpdated', 'DeviceTransfered'];
+const eventsToSave = ['DeviceCreated', 'DevicePropertyUpdated', 'DeviceTransfered', 'DeviceSigned', 'SignatureRevoked'];
 
 class ManageDevice extends Component {
   constructor(props) {
@@ -67,6 +67,7 @@ class ManageDevice extends Component {
     try {
       const { instance, deviceId } = this.state;
       let device = await instance.devices(deviceId);
+      let signatureCount = await instance.deviceSignatureCount(deviceId);
       let allEvents = instance.allEvents({ fromBlock: 0, toBlock: 'latest' });
       allEvents.get((error, logs) => {
         let filteredData = logs.filter(el => eventsToSave.includes(el.event) && el.args.deviceId.toNumber() === parseInt(deviceId, 10));
@@ -78,6 +79,7 @@ class ManageDevice extends Component {
             identifier: device[1],
             metadataHash: device[2],
             firmwareHash: device[3],
+            signatureCount: signatureCount.toNumber()
           })
         }
 
@@ -207,7 +209,7 @@ class ManageDevice extends Component {
   }
 
   render() {
-    const { web3, loading, showError, owner, identifier, metadataHash, firmwareHash, showEditFirmware, showEditIdentifier, showEditMetadata, showEditOwner } = this.state;
+    const { web3, loading, showError, owner, identifier, metadataHash, firmwareHash,  signatureCount, showEditFirmware, showEditIdentifier, showEditMetadata, showEditOwner } = this.state;
 
     let identifierContent = () => {
       if (showEditIdentifier) {
@@ -300,6 +302,12 @@ class ManageDevice extends Component {
               <div style={{ marginBottom: '20px' }}>{firmwareContent()}</div>
               {transferContent()}
               <Divider />
+              {signatureCount > 0 &&
+              <div>
+              <div>This device has <strong>{signatureCount}</strong> active signature(s). Devices that have been signed can't be updated.</div>
+              <Divider />
+              </div>
+              }
               <Card title={'Historical events for device (oldest to newest)'}>
                 {this.state.data.length !== 0 ?
                   <div>
@@ -312,6 +320,10 @@ class ManageDevice extends Component {
                           return <Timeline.Item>Property {web3.toUtf8(el.args.property)} updated to <code>{el.args.newValue}</code></Timeline.Item>
                         if (el.event === 'DeviceTransfered')
                           return <Timeline.Item color='orange'>Device transfered to &nbsp;<Link to={"/lookup-entity/" + el.args.newOwner}><Tag>{el.args.newOwner}</Tag></Link></Timeline.Item>
+                        if (el.event === 'DeviceSigned')
+                          return <Timeline.Item color='purple'>Signature with  &nbsp;<Link to={"/check-signature/" + el.args.signatureId.toNumber()}><Tag>ID {el.args.signatureId.toNumber()}</Tag></Link>created by {el.args.signer}</Timeline.Item>  
+                        if (el.event === 'SignatureRevoked')
+                          return <Timeline.Item color='purple'>Signature with  &nbsp;<Link to={"/check-signature/" + el.args.signatureId.toNumber()}><Tag>ID {el.args.signatureId.toNumber()}</Tag></Link>revoked</Timeline.Item>  
                         else
                           return null
                       })}

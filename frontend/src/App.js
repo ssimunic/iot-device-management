@@ -12,6 +12,7 @@ import EditEntity from './components/EditEntity';
 import LookupEntity from './components/LookupEntity';
 import ManageDevice from './components/ManageDevice';
 import LookupDevice from './components/LookupDevice';
+import CheckSignature from './components/CheckSignature';
 
 import { Layout, Menu, Icon, Tag, Alert, Spin } from 'antd';
 
@@ -85,6 +86,7 @@ class App extends Component {
           <Route path="/manage-devices" component={ManageDevices} />
           <Route path="/manage-device/:deviceId" component={ManageDevice} />
           <Route path="/lookup-device" component={LookupDevice} />
+          <Route path="/check-signature/:signatureId" component={CheckSignature} />
         </div>
       }
       return (
@@ -158,11 +160,12 @@ class App extends Component {
                   </SubMenu>
                   {/*
                   <SubMenu key="sub3" title={<span><Icon type="form" />Signatures</span>}>
+
                     <Menu.Item key="6">
                       <Link to="#" className="nav-text">Sign</Link>
                     </Menu.Item>
                     <Menu.Item key="7">
-                      <Link to="#" className="nav-text">Check</Link>
+                      <Link to="/check-signature" className="nav-text">Check</Link>
                     </Menu.Item>
                   </SubMenu>
                   */}

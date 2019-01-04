@@ -7,7 +7,7 @@ import { Button, Tag, Card, Input, Divider, Timeline, message } from 'antd';
 
 const Search = Input.Search;
 
-const eventsToSave = ['EntityDataUpdated', 'DeviceCreated', 'DeviceTransfered'];
+const eventsToSave = ['EntityDataUpdated', 'DeviceCreated', 'DeviceTransfered', 'DeviceSigned'];
 
 class LookupEntity extends Component {
   constructor(props) {
@@ -53,7 +53,7 @@ class LookupEntity extends Component {
 
       let allEvents = instance.allEvents({ fromBlock: 0, toBlock: 'latest' });
       allEvents.get((error, logs) => {
-        let filteredData = logs.filter(el => eventsToSave.includes(el.event) && (el.args.owner === address || el.args.oldOwner === address || el.args.newOwner === address));
+        let filteredData = logs.filter(el => eventsToSave.includes(el.event) && (el.args.owner === address || el.args.oldOwner === address || el.args.newOwner === address || el.args.signer === address));
         if (!error) {
           this.setState({
             address: address,
@@ -100,6 +100,8 @@ class LookupEntity extends Component {
                         return <Timeline.Item color='green'>Created device with &nbsp;<Link to={"/manage-device/" + el.args.deviceId.toNumber()}><Tag>ID {el.args.deviceId.toNumber()}</Tag></Link>, identifier <code>{el.args.identifier}</code>, metadata hash <code>{el.args.metadataHash}</code> and firmware hash <code>{el.args.firmwareHash}</code></Timeline.Item>
                       if (el.event === 'DeviceTransfered')
                         return <Timeline.Item color='orange'>Device with &nbsp;<Link to={"/manage-device/" + el.args.deviceId.toNumber()}><Tag>ID {el.args.deviceId.toNumber()}</Tag></Link>transfered {el.args.newOwner === this.state.address && <span>from &nbsp;<Tag onClick={() => this.reloadWithAddress(el.args.oldOwner)}>{el.args.oldOwner}</Tag></span>}{el.args.oldOwner === this.state.address && <span>to &nbsp;<Tag onClick={() => this.reloadWithAddress(el.args.newOwner)}>{el.args.newOwner}</Tag></span>}</Timeline.Item>
+                      if (el.event === 'DeviceSigned')
+                        return <Timeline.Item color='purple'>Signed device with &nbsp;<Link to={"/manage-device/" + el.args.deviceId.toNumber()}><Tag>ID {el.args.deviceId.toNumber()}</Tag></Link></Timeline.Item>
                       else
                         return null
                     })}

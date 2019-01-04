@@ -223,6 +223,7 @@ contract SignatureBase {
      */
     function revokeSignature(uint _signatureId) public {
         require(signatures[_signatureId].signer == msg.sender, "Only for creator of the signature");
+        require(signatures[_signatureId].revoked == false, "Signature mustn't be revoked already");
         Signature storage signature = signatures[_signatureId];
         signature.revoked = true;
         deviceSignatureCount[signature.deviceId]--;

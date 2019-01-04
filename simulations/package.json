@@ -2,10 +2,10 @@
   "name": "simulations",
   "version": "0.1.0",
   "dependencies": {
-    "ethereumjs-util": "^5.2.0",
-    "express": "^4.16.3",
-    "merkle-tree-solidity": "^1.0.8",
-    "request": "^2.88.0",
-    "web3": "^0.20.6"
+    "ethereumjs-util": "5.2.0",
+    "express": "4.16.3",
+    "merkle-tree-solidity": "1.0.8",
+    "request": "2.88.0",
+    "web3": "0.20.6"
   }
 }
