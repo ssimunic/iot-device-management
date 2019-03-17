@@ -46,7 +46,7 @@ Consists of entities, devices and an IoT platform.
 Technologies used are as follows:
 
 * Ethereum
-* Solidit
+* Solidity
 * Truffle Framework
 * Web3.js
 * React
