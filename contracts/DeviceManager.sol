@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 import "./MerkleProof.sol";
 import "./ECRecovery.sol";
@@ -23,7 +23,7 @@ contract EntityBase {
      * @notice Update entity data.
      * @param _data Entity data.
      */
-    function updateEntityData(string _data) public {
+    function updateEntityData(string memory _data) public {
         ownerToEntity[msg.sender].data = _data;
 
         emit EntityDataUpdated(msg.sender, _data);
@@ -108,7 +108,7 @@ contract DeviceHelper is DeviceBase {
      * @param _owner Owner address.
      * @return Array of device IDs.
      */
-    function getDevicesByOwner(address _owner) public view returns (uint[]) {
+    function getDevicesByOwner(address _owner) public view returns (uint[] memory) {
         uint[] memory deviceIds = new uint[](ownerDeviceCount[_owner]);
         uint counter = 0;
         for (uint i = 0; i < devices.length; i++) {
@@ -126,7 +126,7 @@ contract DeviceHelper is DeviceBase {
      * @return Boolean status.
      */
     function isDeviceAnEntity(uint _deviceId) public view returns (bool) {
-        return devices[_deviceId].owner == address(devices[_deviceId].identifier);
+        return devices[_deviceId].owner == address(uint160(uint256(devices[_deviceId].identifier)));
     }
 
     /**
@@ -137,7 +137,7 @@ contract DeviceHelper is DeviceBase {
      * @param _leaf Leaf of Merkle tree.
      * @return Boolean status.
      */
-    function isValidMetadataMember(uint _deviceId, bytes32[] _proof, bytes32 _leaf) public view returns (bool) {
+    function isValidMetadataMember(uint _deviceId, bytes32[] memory _proof, bytes32 _leaf) public view returns (bool) {
         return MerkleProof.verifyProof(_proof, devices[_deviceId].metadataHash, _leaf);
     }
 
@@ -159,8 +159,8 @@ contract DeviceHelper is DeviceBase {
      * @param _signature Signature generated using web3.eth.sign().
      * @return Boolean status.
      */
-    function isValidEthMessage(uint _deviceId, bytes32 _messageHash, bytes _signature) public view returns (bool) {
-        return ECRecovery.recover(_messageHash, _signature) == address(devices[_deviceId].identifier);
+    function isValidEthMessage(uint _deviceId, bytes32 _messageHash, bytes memory _signature) public view returns (bool) {
+        return ECRecovery.recover(_messageHash, _signature) == address(uint160(uint256(devices[_deviceId].identifier)));
     }
 }
 
@@ -242,7 +242,7 @@ contract SignatureHelper is SignatureBase {
      * @param _deviceId ID of a device.
      * @return Array of signature IDs.
      */
-    function getActiveSignaturesForDevice(uint _deviceId) public view returns (uint[]) {
+    function getActiveSignaturesForDevice(uint _deviceId) public view returns (uint[] memory) {
         uint[] memory signatureIds = new uint[](deviceSignatureCount[_deviceId]);
         uint counter = 0;
         for (uint i = 0; i < signatures.length; i++) {

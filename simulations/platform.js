@@ -32,7 +32,7 @@ app.post('/receive', function (req, res) {
   let validMetadata = deviceManager.isValidMetadataMember(deviceId, proof, metadataHash);
   console.log('valid metadata: ' + validMetadata);
 
-  // Validate metadata
+  // Validate firmware
   const { firmware } = req.body;
   let firmwareHash = addHexPrefix(sha3(firmware).toString('hex'));
   let validFirmware = deviceManager.isValidFirmwareHash(deviceId, firmwareHash);

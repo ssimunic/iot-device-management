@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+pragma solidity ^0.5.0;
 
 /**
  * @title Elliptic curve signature operations
@@ -13,7 +13,7 @@ library ECRecovery {
      * @param _hash bytes32 message, the hash is the signed message. What is recovered is the signer address.
      * @param _signature bytes signature, the signature is generated using web3.eth.sign()
      */
-    function recover(bytes32 _hash, bytes _signature)
+    function recover(bytes32 _hash, bytes memory _signature)
         internal
         pure
         returns (address)
