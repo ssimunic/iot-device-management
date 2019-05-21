@@ -18,16 +18,16 @@ Below are presented four main concepts that apply to this system.
 Device is registered without revealing it's private properties by using Merkle tree. Public key or it's representation is used as an ID. 
 
 #### Example of properties being hashed into Merkle root
-![](https://i.imgur.com/mt2TiQe.png)
+<img src="https://i.imgur.com/mt2TiQe.png" width="700">
 
 ### Message Authentication
 Each message is signed and validated using blockchain on receiver's end.
 
 #### Generating signature
-![](https://i.imgur.com/3TTQcqZ.png)
+<img src="https://i.imgur.com/3TTQcqZ.png" width="700">
 
 #### Validation
-![](https://i.imgur.com/5NpKIkW.png)
+<img src="https://i.imgur.com/5NpKIkW.png" width="700">
 
 ### Firmware Hashing
 It is possible to confirm that device is running valid firmware that hasn't been tampered with.
@@ -39,7 +39,7 @@ Based on Web of Trust principle, devices can form a network of trust. The more s
 
 Consists of entities, devices and an IoT platform. 
 
-![](https://i.imgur.com/91p9lkX.png)
+<img src="https://i.imgur.com/91p9lkX.png" width="700">
 
 ### Development
 
